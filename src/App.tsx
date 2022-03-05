@@ -31,10 +31,6 @@ function App() {
           <h1 className="pl-3 text-xl font-bold">Share location</h1>
         </div>
         <div>
-          {/* <div className="w-1/3 pl-5 my-5"> */}
-
-          {/* </div> */}
-          {/* <div className="w-2/3 m-5 "> */}
           <Formik initialValues={initialValues} onSubmit={onSubmit}>
             {(formik) => {
               return (
@@ -65,7 +61,6 @@ function App() {
               );
             }}
           </Formik>
-          {/* </div> */}
         </div>
       </div>
     </div>
