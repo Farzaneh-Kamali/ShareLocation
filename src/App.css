@@ -1,0 +1,5 @@
+.leaflet-container {
+  width: 11rem;
+  height: 7rem;
+  border: black solid thin;
+}

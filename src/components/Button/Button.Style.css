@@ -1,0 +1,33 @@
+.button {
+  border-radius: 8px;
+  font-style: normal;
+  font-weight: bold;
+  font-size: 14px;
+  line-height: 19px;
+  text-align: center;
+  height: 38px;
+  margin: 10px 0 0 10px;
+}
+
+.button_SaveEdit {
+  color: white;
+  background-color: rgb(92, 163, 190);
+}
+
+.button_Cancle {
+  color: white;
+  background-color: rgb(116, 115, 115);
+}
+.button_Close {
+  color: white;
+  background-color: peru;
+}
+
+.button_M {
+  width: 50px;
+  height: 30px;
+}
+
+.button_L {
+  width: 70px;
+}

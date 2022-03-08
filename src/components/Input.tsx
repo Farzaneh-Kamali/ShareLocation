@@ -1,8 +1,18 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { Field, useFormikContext } from 'formik';
 import Select from 'react-select';
-import Logo from '../images/upload.png';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import {
+  MapContainer,
+  Rectangle,
+  TileLayer,
+  useMap,
+  useMapEvent,
+  Marker,
+  Popup,
+  useMapEvents,
+} from 'react-leaflet';
+import useGeoLocation from '../hooks/useGeoLocation';
+import L from 'leaflet';
 
 export const Input = ({
   type,
@@ -13,7 +23,6 @@ export const Input = ({
   name: string;
   option?: { value: string; label: string }[];
 }) => {
-  //   const map = useMap();
   const { setFieldValue, values } = useFormikContext<{ logo: File }>();
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -32,6 +41,10 @@ export const Input = ({
       console.log(err);
     }
   };
+
+  const location = useGeoLocation();
+  console.log(typeof location.coordinates.lat);
+
   switch (type) {
     case 'text':
       return (
@@ -46,7 +59,30 @@ export const Input = ({
       );
 
     case 'map':
-      break;
+      if (location.loaded) {
+        return (
+          //@ts-ignore
+          <MapContainer
+            center={[location.coordinates.lat, location.coordinates.lng]}
+            zoom={13}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <Marker
+              position={[location.coordinates.lat, location.coordinates.lng]}
+              draggable={true}
+            />
+          </MapContainer>
+        );
+      } else {
+        return (
+          <div>
+            <p>Loading...</p>
+          </div>
+        );
+      }
 
     case 'select':
       return (
@@ -65,13 +101,17 @@ export const Input = ({
 
     case 'file':
       return (
-        <div className="flex flex-col items-center my-4 rounded-sm w-44 h-28 bg-sky-300">
+        <div className="flex flex-col items-center my-4 border-2 rounded-sm w-44 h-28 bg-sky-300 border-sky-600">
           <div className="w-full text-center text-white rounded-t-sm bg-sky-600">
             <h1 className="text-base">Upload</h1>
           </div>
           <div className="flex flex-col justify-center h-full">
             <label>
-              <img src={Logo} alt="" className="w-10 h-10 cursor-pointer" />
+              <img
+                src={require('../images/upload.png')}
+                alt=""
+                className="w-10 h-10 cursor-pointer"
+              />
               <input
                 type="file"
                 name={name}
