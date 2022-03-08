@@ -1,4 +1,10 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, {
+  ChangeEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Field, useFormikContext } from 'formik';
 import Select from 'react-select';
 import {
@@ -11,40 +17,100 @@ import {
   Popup,
   useMapEvents,
 } from 'react-leaflet';
-import useGeoLocation from '../hooks/useGeoLocation';
 import L from 'leaflet';
 
-export const Input = ({
-  type,
-  name,
-  option,
-}: {
+interface InputProps {
   type: string;
   name: string;
-  option?: { value: string; label: string }[];
-}) => {
-  const { setFieldValue, values } = useFormikContext<{ logo: File }>();
+  options?: { value: string; label: string }[];
+  location?: { loaded: boolean; coordinates: { lat: number; lng: number } };
+}
+export const Input = ({ type, name, options, location }: InputProps) => {
+  //State value of form
+  const { setFieldValue, values } = useFormikContext<{
+    locationMap: L.LatLngExpression;
+    locationType: object;
+    logo: File;
+  }>();
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
+  //Get Current location with useGeoLocation
+  //Then get marker location if user move it
+  // const location = useGeoLocation();
+  const center = location?.coordinates;
+
+  function DraggableMarker() {
+    const [position, setPosition] = useState(center);
+    const markerRef = useRef(null);
+
+    const eventHandlers = useMemo(
+      () => ({
+        dragend() {
+          const marker = markerRef.current;
+          if (marker != null) {
+            //@ts-ignore
+            setPosition(marker.getLatLng());
+          }
+        },
+      }),
+      []
+    );
+    // const map = useMapEvents({
+    //   : () => {
+    //     map.locate();
+    //   },
+    //   locationfound: (location) => {
+    //     setFieldValue('locationMap', location);
+    //     console.log('location found:', location);
+    // setFieldValue('locationMap', location);
+    //   },
+    // });
+
+    return (
+      <div>
+        {position && (
+          <Marker
+            draggable={true}
+            eventHandlers={eventHandlers}
+            position={position}
+            ref={markerRef}
+          />
+        )}
+      </div>
+    );
+  }
+
+  //Get Value of LocationType if changed
+  const [option, setOption] = useState(options ? options[0] : null);
+  const [imgUrl, setImgUrl] = useState(require('../images/upload.png'));
+  const handleSelectChange = (
+    selectedOption: React.SetStateAction<{
+      value: string;
+      label: string;
+    } | null>
+  ) => {
+    setOption(selectedOption);
+    setFieldValue('locationType', selectedOption);
+  };
+
+  //Get value of logo file
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     try {
       if (e.target.files) {
         const file_size = e.target.files[0].size;
         if (file_size < 9437184.00402009) {
           setFieldValue('logo', undefined);
-          setFieldValue(name, e.target.files[0]);
+          setFieldValue('logo', e.target.files[0]);
+          console.log(e.target.files[0]);
+          setImgUrl(URL.createObjectURL(e.target.files[0]));
         } else {
           alert('حجم فایل انتخابی باید کمتر از 9 مگا بایت باشد !');
         }
       }
-      console.log(values.logo);
     } catch (err) {
       console.log(err);
     }
   };
-
-  const location = useGeoLocation();
-  console.log(typeof location.coordinates.lat);
-
+  // console.log('url:', imgUrl);
   switch (type) {
     case 'text':
       return (
@@ -59,7 +125,7 @@ export const Input = ({
       );
 
     case 'map':
-      if (location.loaded) {
+      if (location?.loaded) {
         return (
           //@ts-ignore
           <MapContainer
@@ -70,10 +136,7 @@ export const Input = ({
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-            <Marker
-              position={[location.coordinates.lat, location.coordinates.lng]}
-              draggable={true}
-            />
+            <DraggableMarker />
           </MapContainer>
         );
       } else {
@@ -90,10 +153,11 @@ export const Input = ({
           {option && (
             <Select
               name={name}
-              options={option}
+              options={options}
               isSearchable={true}
               className="my-4 outline-none w-44 "
-              defaultValue={option[0]}
+              value={option}
+              onChange={handleSelectChange}
             />
           )}
         </div>
@@ -108,15 +172,16 @@ export const Input = ({
           <div className="flex flex-col justify-center h-full">
             <label>
               <img
-                src={require('../images/upload.png')}
+                id="logo"
+                src={imgUrl}
                 alt=""
-                className="w-10 h-10 cursor-pointer"
+                className="w-20 h-20 cursor-pointer"
               />
               <input
                 type="file"
                 name={name}
                 accept="image/*"
-                onChange={onChange}
+                onChange={onFileChange}
                 className="hidden"
               />
             </label>
