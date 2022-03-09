@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '../components/Button/Button';
 import { Input } from '../components/Input';
 import { LabelTag } from '../components/labelTag';
+import { useNavigate } from 'react-router-dom';
 
 interface HomeProps {
   location: {
@@ -18,6 +19,8 @@ const locationOptions = [
 ];
 
 export const Home = ({ location }: HomeProps) => {
+  // const [values, setFieldValue] = useFormikContext();
+
   const initialValues = {
     locationName: '',
     locationMap: {
@@ -30,13 +33,27 @@ export const Home = ({ location }: HomeProps) => {
 
   type FormValues = {
     locationName: string;
-    locationMap: L.LatLngExpression;
-    locationType: object;
+    locationMap: {
+      lat: number;
+      lng: number;
+    };
+    locationType: { value: string; label: string };
     logo?: File;
   };
-  const onSubmit = (values: FormValues, onSubmitProps: any) => {
-    console.log(values);
+  const navigate = useNavigate();
+
+  const onSubmit = (values: FormValues) => {
+    navigate('details', {
+      state: {
+        name: values.locationName,
+        lat: values.locationMap.lat,
+        lng: values.locationMap.lng,
+        type: values.locationType.label,
+        logo: values.logo ? values.logo : '',
+      },
+    });
   };
+
   return (
     <div className="flex flex-col w-1/2 h-auto rounded-md">
       <div className="text-white bg-sky-600 rounded-t-md ring-2 ring-sky-600 ">
@@ -70,7 +87,16 @@ export const Home = ({ location }: HomeProps) => {
                 </div>
               </div>
               <div className="flex justify-end">
-                <Button type="reset" gruop="Cancle" size="L">
+                <Button
+                  type="reset"
+                  gruop="Cancle"
+                  size="L"
+                  on_Click={() => {
+                    formik.resetForm({
+                      values: initialValues,
+                    });
+                  }}
+                >
                   Cancle
                 </Button>
                 <Button type="submit" gruop="SaveEdit" size="L">

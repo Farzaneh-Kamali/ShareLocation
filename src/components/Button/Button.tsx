@@ -7,6 +7,15 @@ type ButtonType = 'submit' | 'reset' | 'button';
 
 type SizeType = 'M' | 'L';
 
+interface ButtonProps {
+  children: JSX.Element | string;
+  type: ButtonType;
+  size: SizeType;
+  gruop: GroupType;
+  on_Click?: MouseEventHandler<HTMLButtonElement> | undefined;
+  disabled?: boolean;
+}
+
 export const Button = ({
   children,
   type,
@@ -14,14 +23,7 @@ export const Button = ({
   gruop,
   on_Click,
   disabled,
-}: {
-  children: JSX.Element | string;
-  type: ButtonType;
-  size: SizeType;
-  gruop: GroupType;
-  on_Click?: MouseEventHandler<HTMLButtonElement> | undefined;
-  disabled?: boolean;
-}) => {
+}: ButtonProps) => {
   return (
     <button
       type={type}

@@ -1,23 +1,8 @@
-import React, {
-  ChangeEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { ChangeEvent, useMemo, useRef, useState } from 'react';
 import { Field, useFormikContext } from 'formik';
 import Select from 'react-select';
-import {
-  MapContainer,
-  Rectangle,
-  TileLayer,
-  useMap,
-  useMapEvent,
-  Marker,
-  Popup,
-  useMapEvents,
-} from 'react-leaflet';
-import L from 'leaflet';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L, { icon } from 'leaflet';
 
 interface InputProps {
   type: string;
@@ -27,9 +12,10 @@ interface InputProps {
 }
 export const Input = ({ type, name, options, location }: InputProps) => {
   //State value of form
-  const { setFieldValue, values } = useFormikContext<{
-    locationMap: L.LatLngExpression;
-    locationType: object;
+  const { values, setFieldValue } = useFormikContext<{
+    name: string;
+    locationMap: { lat: number; lng: number };
+    locationType: { value: string; label: string };
     logo: File;
   }>();
 
@@ -37,7 +23,11 @@ export const Input = ({ type, name, options, location }: InputProps) => {
   //Then get marker location if user move it
   // const location = useGeoLocation();
   const center = location?.coordinates;
-
+  const myIcon = new (icon as any)({
+    //@ts-ignore
+    iconUrl: require('../images/marker.png'),
+    iconSize: [25, 25],
+  });
   function DraggableMarker() {
     const [position, setPosition] = useState(center);
     const markerRef = useRef(null);
@@ -49,21 +39,21 @@ export const Input = ({ type, name, options, location }: InputProps) => {
           if (marker != null) {
             //@ts-ignore
             setPosition(marker.getLatLng());
+            //@ts-ignore
+            const tempPosition = marker.setLatLng(
+              //@ts-ignore
+              new L.LatLng(marker.getLatLng()?.lat, marker.getLatLng()?.lng)
+            );
+
+            setFieldValue('locationMap', {
+              lat: tempPosition._latlng.lat,
+              lng: tempPosition._latlng.lng,
+            });
           }
         },
       }),
       []
     );
-    // const map = useMapEvents({
-    //   : () => {
-    //     map.locate();
-    //   },
-    //   locationfound: (location) => {
-    //     setFieldValue('locationMap', location);
-    //     console.log('location found:', location);
-    // setFieldValue('locationMap', location);
-    //   },
-    // });
 
     return (
       <div>
@@ -71,8 +61,10 @@ export const Input = ({ type, name, options, location }: InputProps) => {
           <Marker
             draggable={true}
             eventHandlers={eventHandlers}
-            position={position}
+            position={values.locationMap}
             ref={markerRef}
+            icon={myIcon}
+            autoPan={true}
           />
         )}
       </div>
@@ -100,7 +92,6 @@ export const Input = ({ type, name, options, location }: InputProps) => {
         if (file_size < 9437184.00402009) {
           setFieldValue('logo', undefined);
           setFieldValue('logo', e.target.files[0]);
-          console.log(e.target.files[0]);
           setImgUrl(URL.createObjectURL(e.target.files[0]));
         } else {
           alert('حجم فایل انتخابی باید کمتر از 9 مگا بایت باشد !');
@@ -110,7 +101,7 @@ export const Input = ({ type, name, options, location }: InputProps) => {
       console.log(err);
     }
   };
-  // console.log('url:', imgUrl);
+
   switch (type) {
     case 'text':
       return (
@@ -127,17 +118,20 @@ export const Input = ({ type, name, options, location }: InputProps) => {
     case 'map':
       if (location?.loaded) {
         return (
-          //@ts-ignore
-          <MapContainer
-            center={[location.coordinates.lat, location.coordinates.lng]}
-            zoom={13}
-          >
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <DraggableMarker />
-          </MapContainer>
+          <div className="border-2 border-black w-44 h-28">
+            <MapContainer
+              center={[location.coordinates.lat, location.coordinates.lng]}
+              zoom={13}
+              style={{ height: '100%', width: '100%' }}
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+
+              <DraggableMarker />
+            </MapContainer>
+          </div>
         );
       } else {
         return (
@@ -156,7 +150,7 @@ export const Input = ({ type, name, options, location }: InputProps) => {
               options={options}
               isSearchable={true}
               className="my-4 outline-none w-44 "
-              value={option}
+              value={values.locationType}
               onChange={handleSelectChange}
             />
           )}
